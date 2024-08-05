@@ -1,14 +1,21 @@
 package com.jpa2.domain.member;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.jpa2.domain.BaseTimeEntity;
+import com.jpa2.domain.comment.Comment;
+import com.jpa2.domain.post.Post;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,6 +54,30 @@ public class Member extends BaseTimeEntity {
 	@Column(length = 1000)
 	private String refreshToken; // RefreshToken
 	
+	
+	
+	//== 회원탈퇴 -> 작성한 게시물, 댓글 모두 삭제 ==//
+	@OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Post> postList = new ArrayList<>();
+	
+	@OneToMany(mappedBy = "writer", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Comment> commentList = new ArrayList<>();
+	
+	
+	
+	//== 연관관계 메서드 ==//
+	public void addPost(Post post) {
+		// post의 writer 설정은 post에서 함
+		postList.add(post);
+	}
+	
+	public void addComment(Comment comment) {
+		// comment의 writer 설정은 comment에서 함
+		commentList.add(comment);
+	}
+	
+	
+	
 	//== 정보 수정 ==//
 	public void updatePassword(PasswordEncoder passwordEncoder, String password) {
 		this.password = passwordEncoder.encode(password);
@@ -75,5 +106,15 @@ public class Member extends BaseTimeEntity {
 	//== 패스워드 암호화 ==//
 	public void encodePassword(PasswordEncoder passwordEncoder) {
 		this.password = passwordEncoder.encode(password);
+	}
+	
+	// 비밀번호 변경, 회원 탈퇴 시 비밀번호를 확인하며 이 때, 비밀번호의 일치 여부를 판단하는 메서드
+	public boolean matchPassword(PasswordEncoder passwordEncoder, String checkPassword) {
+		return passwordEncoder.matches(checkPassword, getPassword());
+	}
+	
+	// 회원가입 시 USER의 권한을 부여하는 메서드
+	public void addUserAuthority() {
+		this.role = Role.USER;
 	}
 }
