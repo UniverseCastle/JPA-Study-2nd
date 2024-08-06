@@ -1,9 +1,13 @@
-package com.jpa2.domain.member.exception;
+package com.jpa2.global.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @RestControllerAdvice
@@ -18,10 +22,28 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * 따로 Filter에 handler를 설정하여 처리
  */
 @RestControllerAdvice
+@Slf4j
 public class ExceptionAdvice {
-
+	
+	@ExceptionHandler(BaseException.class)
+	public ResponseEntity handlerBaseEx(BaseException exception) {
+		log.error("BaseException errorMessgae(): {}", exception.getExceptionType().getErrorMessage());
+		log.error("BaseException errorCode(): {}", exception.getExceptionType().getErrorCode());
+		
+		return new ResponseEntity(new ExceptionDto(exception.getExceptionType().getErrorCode()),
+												   exception.getExceptionType().getHttpStatus());
+	}
+	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity handleMemberEx(Exception exception) {
-		return new ResponseEntity(HttpStatus.OK);
+		exception.printStackTrace();
+		
+		return new ResponseEntity(HttpStatus.OK); // 서버에서 예외가 발생하더라도 200 반환
+	}
+	
+	@Data
+	@AllArgsConstructor
+	static class ExceptionDto {
+		private Integer errorCode;
 	}
 }

@@ -21,6 +21,8 @@ import com.jpa2.domain.member.Role;
 import com.jpa2.domain.member.dto.MemberInfoDto;
 import com.jpa2.domain.member.dto.MemberSignUpDto;
 import com.jpa2.domain.member.dto.MemberUpdateDto;
+import com.jpa2.domain.member.exception.MemberException;
+import com.jpa2.domain.member.exception.MemberExceptionType;
 import com.jpa2.domain.member.repository.MemberRepository;
 
 import jakarta.persistence.EntityManager;
@@ -94,8 +96,8 @@ class MemberServiceTest {
 		memberService.signUp(memberSignUpDto);
 		clear();
 		
-		// then TODO: 이곳 MEMBEREXCEPTION으로 고치기
-		Member member = memberRepository.findByUsername(memberSignUpDto.username()).orElseThrow(() -> new Exception("회원이 없습니다."));
+		// then
+		Member member = memberRepository.findByUsername(memberSignUpDto.username()).orElseThrow(() -> new MemberException(MemberExceptionType.NOT_FOUND_MEMBER));
 		
 		assertThat(member.getId()).isNotNull();
 		assertThat(member.getUsername()).isEqualTo(memberSignUpDto.username());
@@ -114,7 +116,7 @@ class MemberServiceTest {
 		clear();
 		
 		// when, then
-		assertThat(assertThrows(Exception.class, () -> memberService.signUp(memberSignUpDto)).getMessage()).isEqualTo("이미 존재하는 아이디 입니다.");
+		assertThat(assertThrows(MemberException.class, () -> memberService.signUp(memberSignUpDto)).getExceptionType()).isEqualTo(MemberExceptionType.ALREADY_EXIST_USERNAME);
 	}
 	
 //	회원가입 값 null일 경우
@@ -314,7 +316,7 @@ class MemberServiceTest {
 		MemberSignUpDto memberSignUpDto = setMember();
 		
 		// when, then
-		assertThat(assertThrows(Exception.class, () -> memberService.withdraw(PASSWORD + "1")).getMessage()).isEqualTo("비밀번호가 일치하지 않습니다.");
+		assertThat(assertThrows(MemberException.class, () -> memberService.withdraw(PASSWORD + "1")).getExceptionType().equals(MemberExceptionType.WRONG_PASSWORD));
 	}
 	
 //	회원 정보 조회
