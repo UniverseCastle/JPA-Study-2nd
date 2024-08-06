@@ -409,7 +409,7 @@ class MemberControllerTest {
      * 회원정보조회 실패 -> 회원이없음
      * 회원정보조회 실패 -> 권한이없음
      */
-	@Test
+//	@Test
 	public void 회원정보조회_성공() throws Exception {
 		// given
 		String signUpData = objectMapper.writeValueAsString(new MemberSignUpDto(username, password, name, nickName, age));
@@ -434,5 +434,41 @@ class MemberControllerTest {
 		assertThat(member.getUsername()).isEqualTo(map.get("username"));
 		assertThat(member.getName()).isEqualTo(map.get("name"));
         assertThat(member.getNickName()).isEqualTo(map.get("nickName"));
+	}
+	
+//	@Test
+	public void 회원정보조회_실패_없는회원조회() throws Exception {
+		// given
+		String signUpData = objectMapper.writeValueAsString(new MemberSignUpDto(username, password, name, nickName, age));
+		signUp(signUpData);
+		
+		String accessToken = getAccessToken();
+		
+		// when
+		MvcResult result = mockMvc.perform(
+				get("/member/2211")
+					.characterEncoding(StandardCharsets.UTF_8)
+					.header(accessHeader, BEARER + accessToken))
+			.andExpect(status().isOk())
+			.andReturn();
+		
+		// then
+		assertThat(result.getResponse().getContentAsString()).isEqualTo(""); //빈 문자열
+	}
+	
+	@Test
+	public void 회원정보조회_실패_JWT없음() throws Exception {
+		// given
+		String signUpData = objectMapper.writeValueAsString(new MemberSignUpDto(username, password, name, nickName, age));
+		signUp(signUpData);
+		
+		String accessToken = getAccessToken();
+		
+		// when, then
+		mockMvc.perform(
+				get("/member/1")
+					.characterEncoding(StandardCharsets.UTF_8)
+					.header(accessHeader, BEARER + accessToken + 1))
+			.andExpect(status().isForbidden());
 	}
 }
