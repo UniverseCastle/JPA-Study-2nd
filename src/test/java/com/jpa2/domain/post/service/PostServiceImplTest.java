@@ -2,7 +2,6 @@ package com.jpa2.domain.post.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
@@ -19,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.jpa2.domain.member.Role;
 import com.jpa2.domain.member.dto.MemberSignUpDto;
@@ -29,7 +28,6 @@ import com.jpa2.domain.post.dto.PostUpdateDto;
 import com.jpa2.domain.post.exception.PostException;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 
 @SpringBootTest
 @Transactional

@@ -1,22 +1,22 @@
 package com.jpa2.domain.member.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.jpa2.domain.member.Member;
 import com.jpa2.domain.member.Role;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 
 @SpringBootTest
-@Transactional // 각 테스트가 끝난 후 롤백하여 데이터베이스 상태를 유지
+@Transactional //각 테스트가 끝난 후 롤백하여 데이터베이스 상태를 유지
 class MemberRepositoryTest {
 	
 	@Autowired
