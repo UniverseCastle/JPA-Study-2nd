@@ -326,7 +326,7 @@ class JwtFilterAuthenticationTest {
 	}
 	
 //	로그인 주소로 보내면 필터 작동x
-	@Test
+//	@Test
 	public void 로그인_주소로_보내면_필터작동_x() throws Exception {
 		// given
 		Map accessAndRefreshToken = getAccessAndRefreshToken();

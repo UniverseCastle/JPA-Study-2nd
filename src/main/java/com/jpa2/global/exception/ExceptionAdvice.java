@@ -1,7 +1,10 @@
 package com.jpa2.global.exception;
 
+import java.net.BindException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -26,19 +29,35 @@ import lombok.extern.slf4j.Slf4j;
 public class ExceptionAdvice {
 	
 	@ExceptionHandler(BaseException.class)
-	public ResponseEntity handlerBaseEx(BaseException exception) {
+	public ResponseEntity<ExceptionDto> handlerBaseEx(BaseException exception) {
 		log.error("BaseException errorMessgae(): {}", exception.getExceptionType().getErrorMessage());
 		log.error("BaseException errorCode(): {}", exception.getExceptionType().getErrorCode());
 		
-		return new ResponseEntity(new ExceptionDto(exception.getExceptionType().getErrorCode()),
+		return new ResponseEntity<ExceptionDto>(new ExceptionDto(exception.getExceptionType().getErrorCode()),
 												   exception.getExceptionType().getHttpStatus());
 	}
 	
+	// @Valid 에서 예외 발생
+	@ExceptionHandler(BindException.class)
+	public ResponseEntity<ExceptionDto> handleValidEx(BindException exception) {
+		log.error("@ValidException 발생! {}", exception.getMessage());
+		
+		return new ResponseEntity<ExceptionDto>(new ExceptionDto(2000), HttpStatus.BAD_REQUEST);
+	}
+	
+	// HttpMessageNotReadableException => json 파싱 오류
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ExceptionDto> httpMessageNotReadableExceptionEx(HttpMessageNotReadableException exception) {
+		log.error("Json을 파싱하는 과정에서 예외 발생! {}", exception.getMessage());
+		
+		return new ResponseEntity<ExceptionDto>(new ExceptionDto(3000), HttpStatus.BAD_REQUEST);
+	}
+	
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity handleMemberEx(Exception exception) {
+	public ResponseEntity<Void> handleMemberEx(Exception exception) {
 		exception.printStackTrace();
 		
-		return new ResponseEntity(HttpStatus.OK); // 서버에서 예외가 발생하더라도 200 반환
+		return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
 	}
 	
 	@Data

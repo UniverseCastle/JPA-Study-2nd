@@ -125,14 +125,21 @@ class MemberControllerTest {
 		String noAgeSignUpData = objectMapper.writeValueAsString(new MemberSignUpDto(username, password, name, nickName, null));
 		
 		// when, then
-		signUp(noUsernameSignUpData);
-		signUp(noPasswordSignUpData);
-		signUp(noNameSignUpData);
-		signUp(noNickNameSignUpData);
-		signUp(noAgeSignUpData);
-		// 예외가 발생하더라도 상태코드 200
+		signUpFail(noUsernameSignUpData);
+		signUpFail(noPasswordSignUpData);
+		signUpFail(noNameSignUpData);
+		signUpFail(noNickNameSignUpData);
+		signUpFail(noAgeSignUpData);
 		
 		assertThat(memberRepository.findAll().size()).isEqualTo(0);
+	}
+	
+	private void signUpFail(String signUpData) throws Exception {
+		mockMvc.perform(
+				post(SIGN_UP_URL)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(signUpData))
+			.andExpect(status().isBadRequest());
 	}
 	
 //	회원정보 수정
@@ -245,7 +252,7 @@ class MemberControllerTest {
 					.header(accessHeader, BEARER + accessToken)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(updatePassword))
-			.andExpect(status().isOk());
+			.andExpect(status().isBadRequest());
 		
 		// then
 		Member member = memberRepository.findByUsername(username).orElseThrow(() -> new Exception("회원이 존재하지 않습니다."));
@@ -274,7 +281,7 @@ class MemberControllerTest {
 					.header(accessHeader, BEARER + accessToken)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(updatePassword))
-			.andExpect(status().isOk());
+			.andExpect(status().isBadRequest());
 		
 		// then
 		Member member = memberRepository.findByUsername(username).orElseThrow(() -> new Exception("회원이 존재하지 않습니다."));
@@ -328,7 +335,7 @@ class MemberControllerTest {
 					.header(accessHeader, BEARER + accessToken)
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(updatePassword))
-			.andExpect(status().isOk());
+			.andExpect(status().isBadRequest());
 		
 		// then
 		Member member = memberRepository.findByUsername(username).orElseThrow(() -> new Exception("회원이 존재하지 않습니다."));
@@ -450,7 +457,7 @@ class MemberControllerTest {
 				get("/member/2211")
 					.characterEncoding(StandardCharsets.UTF_8)
 					.header(accessHeader, BEARER + accessToken))
-			.andExpect(status().isOk())
+			.andExpect(status().isNotFound())
 			.andReturn();
 		
 		// then
