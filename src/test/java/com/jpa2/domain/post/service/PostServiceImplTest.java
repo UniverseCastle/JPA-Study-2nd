@@ -2,14 +2,18 @@ package com.jpa2.domain.post.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.nullable;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
@@ -19,13 +23,20 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.jpa2.domain.comment.Comment;
+import com.jpa2.domain.comment.dto.CommentInfoDto;
+import com.jpa2.domain.comment.repository.CommentRepository;
+import com.jpa2.domain.member.Member;
 import com.jpa2.domain.member.Role;
 import com.jpa2.domain.member.dto.MemberSignUpDto;
+import com.jpa2.domain.member.repository.MemberRepository;
 import com.jpa2.domain.member.serivce.MemberService;
 import com.jpa2.domain.post.Post;
+import com.jpa2.domain.post.dto.PostInfoDto;
 import com.jpa2.domain.post.dto.PostSaveDto;
 import com.jpa2.domain.post.dto.PostUpdateDto;
 import com.jpa2.domain.post.exception.PostException;
+import com.jpa2.domain.post.repository.PostRepository;
 
 import jakarta.persistence.EntityManager;
 
@@ -42,8 +53,20 @@ class PostServiceImplTest {
 	@Autowired
 	private MemberService memberService;
 	
+	@Autowired
+	private MemberRepository memberRepository;
+	
+	@Autowired
+	private PostRepository postRepository;
+	
+	@Autowired
+	private CommentRepository commentRepository;
+	
 	private static final String USERNAME = "username";
 	private static final String PASSWORD = "PASSWORD123@@@";
+	
+	private String title = "제목";
+	private String content = "내용";
 	
 	private void clear() {
 		em.flush();
@@ -57,6 +80,10 @@ class PostServiceImplTest {
 	
 	private MockMultipartFile getMockUploadFile() throws IOException {
 		return new MockMultipartFile("file", "file.jfif", "image/jfif", new FileInputStream("C:/Users/uc/Desktop/uc/Develop/images/thumb/bh.jfif"));
+	}
+	
+	public Post findPost() {
+		return em.createQuery("select p from Post p", Post.class).getSingleResult();
 	}
 	
 	@BeforeEach
@@ -313,5 +340,79 @@ class PostServiceImplTest {
 		Post findPost = em.createQuery("select p from Post p", Post.class).getSingleResult();
 		
 		assertThrows(PostException.class, () -> postService.delete(findPost.getId()));
+	}
+	
+//	포스트 조회
+//	@Test
+	public void 포스트_조회() throws Exception {
+		/**
+		 * Member 생성
+		 */
+		Member member1 = memberRepository.save(Member.builder().username("username1").password("1234567890").name("이름1").nickName("별명1").role(Role.USER).age(20).build());
+		Member member2 = memberRepository.save(Member.builder().username("username2").password("1234567890").name("이름2").nickName("별명2").role(Role.USER).age(21).build());
+		Member member3 = memberRepository.save(Member.builder().username("username3").password("1234567890").name("이름3").nickName("별명3").role(Role.USER).age(22).build());
+		Member member4 = memberRepository.save(Member.builder().username("username4").password("1234567890").name("이름4").nickName("별명4").role(Role.USER).age(23).build());
+		Member member5 = memberRepository.save(Member.builder().username("username5").password("1234567890").name("이름5").nickName("별명5").role(Role.USER).age(24).build());
+		
+		Map<Integer, Long> memberIdMap = new HashMap<>();
+		memberIdMap.put(1, member1.getId());
+		memberIdMap.put(2, member2.getId());
+		memberIdMap.put(3, member3.getId());
+		memberIdMap.put(4, member4.getId());
+		memberIdMap.put(5, member5.getId());
+		
+		/**
+		 * Post 생성
+		 */
+		Post post = Post.builder().title("게시글").content("내용").build();
+		post.confirmWriter(member1);
+		postRepository.save(post);
+		em.flush();
+		
+		/**
+		 * Comment 생성
+		 */
+		final int COMMENT_COUNT = 10;
+		
+		for (int i=1; i<=COMMENT_COUNT; i++) {
+			Comment comment = Comment.builder().content("댓글 + i").build();
+			comment.confirmWriter(memberRepository.findById(memberIdMap.get(i % 3 + 1)).orElse(null));
+			comment.confirmPost(post);
+			
+			commentRepository.save(comment);
+		}
+		
+		/**
+		 * ReComment 생성 (대댓글)
+		 */
+		final int COMMENT_PER_RECOMMENT_COUNT = 20;
+		commentRepository.findAll().stream().forEach(comment -> {
+			for (int i=1; i<=20; i++) {
+				Comment recomment = Comment.builder().content("대댓글" + i).build();
+				recomment.confirmWriter(memberRepository.findById(memberIdMap.get(i % 3 + 1)).orElse(null));
+				recomment.confirmPost(comment.getPost());
+				recomment.confirmParent(comment);
+				
+				commentRepository.save(recomment);
+			}
+		});
+		
+		clear();
+		
+		// when
+		PostInfoDto postInfo = postService.getPostInfo(post.getId());
+		
+		// then
+		assertThat(postInfo.getPostId()).isEqualTo(post.getId());
+		assertThat(postInfo.getContent()).isEqualTo(post.getContent());
+		assertThat(postInfo.getWriterDto().getUsername()).isEqualTo(post.getWriter().getUsername());
+		
+		int recommentCount = 0;
+		for (CommentInfoDto commentInfoDto : postInfo.getCommentInfoDtoList()) {
+			recommentCount += commentInfoDto.getReCommentListDtoList().size();
+		}
+		
+		assertThat(postInfo.getCommentInfoDtoList().size()).isEqualTo(COMMENT_COUNT);
+		assertThat(recommentCount).isEqualTo(COMMENT_PER_RECOMMENT_COUNT * COMMENT_COUNT);
 	}
 }
