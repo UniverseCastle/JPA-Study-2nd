@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.jpa2.domain.post.Post;
 
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, Long>, CustomPostRepository {
 
 	/**
 	 * @EntityGraph JPA에서 N+1 문제를 해결하기 위해 사용
