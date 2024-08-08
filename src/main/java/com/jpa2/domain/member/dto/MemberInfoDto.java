@@ -13,6 +13,14 @@ public class MemberInfoDto {
 	private final String username;
 	private final Integer age;
 	
+	// 기본 생성자 추가
+    public MemberInfoDto() {
+        this.name = null;
+        this.nickName = null;
+        this.username = null;
+        this.age = null;
+    }
+	
 	@Builder
 	public MemberInfoDto(Member member) {
 		this.name = member.getName();
